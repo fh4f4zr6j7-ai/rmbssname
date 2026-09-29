@@ -150,14 +150,13 @@
         .spotlight-hole {
             position: absolute;
             transform: translate(-50%, -50%);
-            width: 28px;
-            height: 28px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: radial-gradient(circle, #f43f5e 0%, #be123c 100%);
-            border: 3px solid #ffffff;
-            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(225, 29, 72, 0.3);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            animation: red-dot-pulse 1.6s infinite ease-in-out;
         }
 
         .quiz-target-pin {
@@ -165,22 +164,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
+            width: 4px;
+            height: 4px;
             background: #ffffff;
             border-radius: 50%;
             pointer-events: none;
-        }
-
-        @keyframes red-dot-pulse {
-            0%, 100% {
-                transform: translate(-50%, -50%) scale(1);
-                box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.18);
-                box-shadow: 0 0 0 8px rgba(225, 29, 72, 0.5), 0 6px 16px rgba(0, 0, 0, 0.5);
-            }
         }
 
         /* Scrollbar styles */
