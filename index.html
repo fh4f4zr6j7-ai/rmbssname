@@ -134,7 +134,7 @@
             z-index: 15;
         }
 
-        /* Quiz Spotlight Effects */
+        /* Quiz Red Dot Target Indicator */
         .spotlight-overlay {
             position: absolute;
             top: 0;
@@ -150,13 +150,14 @@
         .spotlight-hole {
             position: absolute;
             transform: translate(-50%, -50%);
-            width: 95px;
-            height: 95px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            box-shadow: 0 0 0 9999px rgba(19, 42, 29, 0.85);
-            border: 3px solid rgba(255, 255, 255, 0.95);
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            animation: spotlight-glow 2s infinite alternate ease-in-out;
+            background: radial-gradient(circle, #f43f5e 0%, #be123c 100%);
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: red-dot-pulse 1.6s infinite ease-in-out;
         }
 
         .quiz-target-pin {
@@ -164,30 +165,22 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, #e11d48 0%, #be123c 100%);
-            border: 2.5px solid #ffffff;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(225, 29, 72, 0.9);
             pointer-events: none;
         }
 
-        .quiz-target-pin::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 5px;
-            height: 5px;
-            background: #ffffff;
-            border-radius: 50%;
-        }
-
-        @keyframes spotlight-glow {
-            from { box-shadow: 0 0 0 9999px rgba(19, 42, 29, 0.82), 0 0 15px rgba(16, 185, 129, 0.5); }
-            to { box-shadow: 0 0 0 9999px rgba(19, 42, 29, 0.88), 0 0 25px rgba(52, 211, 153, 0.8); }
+        @keyframes red-dot-pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.18);
+                box-shadow: 0 0 0 8px rgba(225, 29, 72, 0.5), 0 6px 16px rgba(0, 0, 0, 0.5);
+            }
         }
 
         /* Scrollbar styles */
