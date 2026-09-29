@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Face Tagger & Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .image-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden; /* Contains the spotlight shadow */
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .class-photo {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .tag-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background-color: rgba(59, 130, 246, 0.7); /* Blue-500 with opacity */
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .tag-marker:hover {
+            background-color: rgba(239, 68, 68, 0.9); /* Red-500 on hover */
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .tag-label {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 6px;
+            background-color: rgba(17, 24, 39, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .tag-marker:hover .tag-label {
+            opacity: 1;
+        }
+
+        /* Spotlight effect for the quiz */
+        .spotlight-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .spotlight-hole {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8); /* Dims everything else */
+            transition: all 0.5s ease;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-20">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                FaceTagger
+            </h1>
+            <p class="text-sm text-slate-400 mt-2">Tag and remember students</p>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto custom-scrollbar px-4 py-2 flex flex-col gap-1" id="nav-container">
+            <!-- Navigation links will be injected here via JS -->
+        </nav>
+
+        <div class="p-4 border-t border-slate-700">
+            <button id="nav-quiz" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                </svg>
+                Take Quiz
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center z-10 shadow-sm">
+            <h2 id="view-title" class="text-xl font-bold text-slate-800">Select a Class</h2>
+            <div class="text-sm text-slate-500" id="stats-container">
+                Tags: <span id="tag-count" class="font-bold text-blue-600">0</span>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-auto p-8 flex justify-center items-start custom-scrollbar" id="main-content">
+            
+            <!-- Class View Container -->
+            <div id="class-view" class="hidden flex-col items-center w-full max-w-6xl">
+                <p class="text-slate-500 mb-4 text-center">Click anywhere on the photo to tag a student.</p>
+                <div class="image-container" id="image-wrapper">
+                    <img id="class-image" src="" alt="Class Photo" class="class-photo">
+                    <div id="tags-container"></div>
+                </div>
+            </div>
+
+            <!-- Quiz View Container -->
+            <div id="quiz-view" class="hidden flex-col items-center w-full max-w-6xl">
+                <div class="bg-white p-6 rounded-xl shadow-md text-center max-w-2xl w-full mb-6">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">Who is this?</h3>
+                    <p class="text-slate-500 mb-6">Select the correct name for the highlighted student.</p>
+                    
+                    <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-4">
+                        <!-- MC options injected here via JS -->
+                    </div>
+                    <div class="mt-6 flex flex-col items-center min-h-[3rem]">
+                        <div id="quiz-feedback" class="font-bold text-lg hidden mb-3 text-center"></div>
+                        <button id="quiz-next" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-8 rounded-lg transition-colors shadow-sm">Next Question</button>
+                    </div>
+                </div>
+
+                <div class="image-container" id="quiz-image-wrapper">
+                    <img id="quiz-image" src="" alt="Quiz Photo" class="class-photo">
+                    <div class="spotlight-overlay">
+                        <div id="spotlight" class="spotlight-hole"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State / Home -->
+            <div id="home-view" class="flex flex-col items-center justify-center h-full text-center max-w-lg">
+                <div class="bg-blue-100 p-4 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Welcome to FaceTagger</h2>
+                <p class="text-slate-600 mb-6">Select a class from the sidebar to view their HD photo. Click on any face to add a name tag. Once you've tagged <strong>at least 4 students</strong>, try the Quiz to test your memory! Your tags are automatically saved to the cloud.</p>
+                <p class="text-sm text-slate-400">Note: To replace images with your GitHub HD images, update the URLs in the JavaScript configuration.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Tagging Modal -->
+    <div id="tag-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-96 transform scale-95 transition-transform duration-200" id="tag-modal-content">
+            <h3 class="text-xl font-bold text-slate-800 mb-4" id="modal-title">Tag Student</h3>
+            
+            <div class="mb-4">
+                <label for="student-name" class="block text-sm font-medium text-slate-700 mb-1">Student Name</label>
+                <input type="text" id="student-name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., John Doe" autocomplete="off">
+            </div>
+
+            <div class="flex justify-between items-center mt-6">
+                <button id="btn-delete-tag" class="text-red-600 hover:text-red-800 text-sm font-medium hidden">Delete Tag</button>
+                <div class="flex gap-2 ml-auto">
+                    <button id="btn-cancel-tag" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition-colors">Cancel</button>
+                    <button id="btn-save-tag" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal (Replaces standard alert) -->
+    <div id="alert-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-[60] hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-80 text-center transform scale-95 transition-transform duration-200" id="alert-modal-content">
+            <div class="mb-4" id="alert-icon">
+                <!-- Icon injected by JS -->
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2" id="alert-title">Notification</h3>
+            <p class="text-slate-600 mb-6" id="alert-message">Message goes here.</p>
+            <button id="btn-close-alert" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">OK</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuration: Define classes and their HD image URLs here.
+        const classConfig = [
+            { id: '1A', name: 'Class 1A', img: '1A.JPG' },
+            { id: '1B', name: 'Class 1B', img: '1B.JPG' },
+            { id: '1C', name: 'Class 1C', img: '1C.JPG' },
+            { id: '1D', name: 'Class 1D', img: '1D.JPG' },
+            { id: '2A', name: 'Class 2A', img: '2A.JPG' },
+            { id: '2B', name: 'Class 2B', img: '2B.JPG' },
+            { id: '2C', name: 'Class 2C', img: '2C.JPG' },
+            { id: '2D', name: 'Class 2D', img: '2D.JPG' },
+            { id: '3A', name: 'Class 3A', img: '3A.JPG' },
+            { id: '3B', name: 'Class 3B', img: '3B.JPG' },
+            { id: '3C', name: 'Class 3C', img: '3C.JPG' },
+            { id: '3D', name: 'Class 3D', img: '3D.JPG' }
+        ];
+
+        // --- YOUR CUSTOM FIREBASE CONFIGURATION ---
+        // To permanently store tags when you host this on GitHub, replace 'null' below with your Firebase Config object.
+        // You can get this for free from console.firebase.google.com -> Project Settings -> Web App
+        const myFirebaseConfig = null; 
+
+        // Environment & Firebase State
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let firebaseConfig = null;
+        try {
+            if (myFirebaseConfig) {
+                firebaseConfig = myFirebaseConfig;
+            } else if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+            }
+        } catch (e) {
+            console.error("Config parse error:", e);
+        }
+        
+        let app, auth, db, userId;
+
+        // App State
+        let tagsData = {};
+        let currentView = 'home';
+        let currentClassId = null;
+        let pendingTag = null; 
+        let editingTagId = null;
+        let currentQuizTag = null;
+
+        const navContainer = document.getElementById('nav-container');
+        const navQuizBtn = document.getElementById('nav-quiz');
+        const homeView = document.getElementById('home-view');
+        const classView = document.getElementById('class-view');
+        const quizView = document.getElementById('quiz-view');
+        const viewTitle = document.getElementById('view-title');
+        const tagCountDisplay = document.getElementById('tag-count');
+        const imageWrapper = document.getElementById('image-wrapper');
+        const classImage = document.getElementById('class-image');
+        const tagsContainer = document.getElementById('tags-container');
+        
+        const quizImage = document.getElementById('quiz-image');
+        const spotlight = document.getElementById('spotlight');
+        const quizOptionsContainer = document.getElementById('quiz-options');
+        const quizFeedback = document.getElementById('quiz-feedback');
+        const quizNextBtn = document.getElementById('quiz-next');
+
+        const tagModal = document.getElementById('tag-modal');
+        const tagModalContent = document.getElementById('tag-modal-content');
+        const studentNameInput = document.getElementById('student-name');
+        const btnSaveTag = document.getElementById('btn-save-tag');
+        const btnCancelTag = document.getElementById('btn-cancel-tag');
+        const btnDeleteTag = document.getElementById('btn-delete-tag');
+        const modalTitle = document.getElementById('modal-title');
+
+        const alertModal = document.getElementById('alert-modal');
+        const alertModalContent = document.getElementById('alert-modal-content');
+        const alertTitle = document.getElementById('alert-title');
+        const alertMessage = document.getElementById('alert-message');
+        const alertIcon = document.getElementById('alert-icon');
+        const btnCloseAlert = document.getElementById('btn-close-alert');
+
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                showAlert('Preview Mode Active', 'Cloud storage is unlinked in this preview. Tags will save temporarily so you can test the app. To enable permanent saving later, add your Firebase config in the code!', 'info');
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Strict Auth checking required for Firestore interaction
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser.uid;
+                
+                setupFirestoreListener();
+            } catch (error) {
+                console.error("Auth error:", error);
+                showAlert('Authentication Error', 'Failed to connect to cloud storage.', 'error');
+            }
+        }
+
+        function setupFirestoreListener() {
+            if (!userId) return;
+            
+            // Following strictly to mandated path: /artifacts/{appId}/users/{userId}/{collectionName}
+            const tagsRef = collection(db, 'artifacts', appId, 'users', userId, 'tags');
+            
+            onSnapshot(tagsRef, (snapshot) => {
+                tagsData = {}; 
+                snapshot.forEach(docSnap => {
+                    const tag = { id: docSnap.id, ...docSnap.data() };
+                    if (!tagsData[tag.classId]) {
+                        tagsData[tag.classId] = [];
+                    }
+                    tagsData[tag.classId].push(tag);
+                });
+                
+                updateTagCount();
+                if (currentView === 'class') {
+                    renderTags();
+                }
+            }, (error) => {
+                console.error("Firestore sync error:", error);
+            });
+        }
+
+        function showAlert(title, message, type = 'info') {
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            
+            if (type === 'error') {
+                alertIcon.innerHTML = `<svg class="w-12 h-12 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else if (type === 'success') {
+                alertIcon.innerHTML = `<svg class="w-12 h-12 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else {
+                alertIcon.innerHTML = `<svg class="w-12 h-12 text-blue-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            }
+
+            alertModal.classList.remove('hidden');
+            setTimeout(() => {
+                alertModal.classList.remove('opacity-0');
+                alertModalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        btnCloseAlert.addEventListener('click', () => {
+            alertModal.classList.add('opacity-0');
+            alertModalContent.classList.add('scale-95');
+            setTimeout(() => alertModal.classList.add('hidden'), 200);
+        });
+
+        function updateTagCount() {
+            let total = 0;
+            for (const cls in tagsData) {
+                total += tagsData[cls].length;
+            }
+            tagCountDisplay.textContent = total;
+        }
+
+        function getAllTags() {
+            let all = [];
+            for (const cls in tagsData) {
+                tagsData[cls].forEach(tag => all.push(tag));
+            }
+            return all;
+        }
+
+        function initNavigation() {
+            classConfig.forEach(cls => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors focus:outline-none nav-class-btn';
+                btn.textContent = cls.name;
+                btn.dataset.classId = cls.id;
+                
+                btn.addEventListener('click', () => loadClassView(cls.id));
+                navContainer.appendChild(btn);
+            });
+            navQuizBtn.addEventListener('click', loadQuizView);
+        }
+
+        function updateNavActiveState(activeId, isQuiz = false) {
+            document.querySelectorAll('.nav-class-btn').forEach(btn => {
+                if (btn.dataset.classId === activeId && !isQuiz) {
+                    btn.classList.add('bg-slate-800', 'text-white');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('bg-slate-800', 'text-white');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+        }
+
+        function switchView(viewName) {
+            homeView.classList.add('hidden');
+            classView.classList.add('hidden');
+            quizView.classList.add('hidden');
+            
+            if (viewName === 'home') homeView.classList.remove('hidden');
+            if (viewName === 'class') classView.classList.remove('hidden');
+            if (viewName === 'quiz') quizView.classList.remove('hidden');
+            currentView = viewName;
+        }
+
+        function loadClassView(classId) {
+            currentClassId = classId;
+            const cls = classConfig.find(c => c.id === classId);
+            
+            viewTitle.textContent = cls.name;
+            
+            classImage.onerror = () => {
+                // Fallback for the preview environment if the local image isn't found
+                classImage.src = `https://placehold.co/1920x1080/e2e8f0/64748b?text=${cls.name}+Image+Missing+Locally`;
+            };
+            classImage.src = cls.img;
+            
+            switchView('class');
+            updateNavActiveState(classId);
+            renderTags();
+        }
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            if (!tagsData[currentClassId]) return;
+
+            tagsData[currentClassId].forEach(tag => {
+                const marker = document.createElement('div');
+                marker.className = 'tag-marker';
+                marker.style.left = `${tag.x}%`;
+                marker.style.top = `${tag.y}%`;
+                
+                const label = document.createElement('div');
+                label.className = 'tag-label';
+                label.textContent = tag.name;
+                
+                marker.appendChild(label);
+                
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openTagModal(tag.id, tag.name);
+                });
+                tagsContainer.appendChild(marker);
+            });
+        }
+
+        imageWrapper.addEventListener('click', (e) => {
+            if (currentView !== 'class') return;
+            const rect = imageWrapper.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            pendingTag = { x, y };
+            openTagModal();
+        });
+
+        function openTagModal(tagId = null, existingName = '') {
+            editingTagId = tagId;
+            studentNameInput.value = existingName;
+            
+            if (tagId) {
+                modalTitle.textContent = 'Edit Student Tag';
+                btnDeleteTag.classList.remove('hidden');
+            } else {
+                modalTitle.textContent = 'Tag Student';
+                btnDeleteTag.classList.add('hidden');
+            }
+            
+            tagModal.classList.remove('hidden');
+            setTimeout(() => {
+                tagModal.classList.remove('opacity-0');
+                tagModalContent.classList.remove('scale-95');
+                studentNameInput.focus();
+            }, 10);
+        }
+
+        function closeTagModal() {
+            tagModal.classList.add('opacity-0');
+            tagModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                tagModal.classList.add('hidden');
+                pendingTag = null;
+                editingTagId = null;
+                studentNameInput.value = '';
+            }, 200);
+        }
+
+        btnCancelTag.addEventListener('click', closeTagModal);
+
+        btnSaveTag.addEventListener('click', async () => {
+            const name = studentNameInput.value.trim();
+            if (!name) {
+                showAlert('Missing Info', 'Please enter a student name.', 'error');
+                return;
+            }
+            
+            // Fallback to in-memory saving if cloud storage isn't connected
+            if (!userId || !firebaseConfig) {
+                if (editingTagId) {
+                    // Update local tag
+                    for (const cls in tagsData) {
+                        const tag = tagsData[cls].find(t => t.id === editingTagId);
+                        if (tag) tag.name = name;
+                    }
+                } else if (pendingTag) {
+                    // Add local tag
+                    const newTag = {
+                        id: 'local_' + Date.now(),
+                        classId: currentClassId,
+                        x: pendingTag.x,
+                        y: pendingTag.y,
+                        name: name
+                    };
+                    if (!tagsData[currentClassId]) tagsData[currentClassId] = [];
+                    tagsData[currentClassId].push(newTag);
+                }
+                updateTagCount();
+                renderTags();
+                closeTagModal();
+                return;
+            }
+
+            const btnOrigText = btnSaveTag.textContent;
+            btnSaveTag.textContent = 'Saving...';
+            btnSaveTag.disabled = true;
+
+            try {
+                if (editingTagId) {
+                    const tagDoc = doc(db, 'artifacts', appId, 'users', userId, 'tags', editingTagId);
+                    await updateDoc(tagDoc, { name: name });
+                } else if (pendingTag) {
+                    const tagsRef = collection(db, 'artifacts', appId, 'users', userId, 'tags');
+                    await addDoc(tagsRef, {
+                        classId: currentClassId,
+                        x: pendingTag.x,
+                        y: pendingTag.y,
+                        name: name
+                    });
+                }
+                closeTagModal();
+            } catch (error) {
+                console.error("Save error:", error);
+                showAlert('Save Failed', 'Could not save the tag to the cloud.', 'error');
+            } finally {
+                btnSaveTag.textContent = btnOrigText;
+                btnSaveTag.disabled = false;
+            }
+        });
+
+        btnDeleteTag.addEventListener('click', async () => {
+            if (!editingTagId) return;
+            
+            // Fallback to in-memory deletion if cloud storage isn't connected
+            if (!userId || !firebaseConfig) {
+                for (const cls in tagsData) {
+                    tagsData[cls] = tagsData[cls].filter(t => t.id !== editingTagId);
+                }
+                updateTagCount();
+                renderTags();
+                closeTagModal();
+                return;
+            }
+            
+            const btnOrigText = btnDeleteTag.textContent;
+            btnDeleteTag.textContent = 'Deleting...';
+            btnDeleteTag.disabled = true;
+
+            try {
+                const tagDoc = doc(db, 'artifacts', appId, 'users', userId, 'tags', editingTagId);
+                await deleteDoc(tagDoc);
+                closeTagModal();
+            } catch (error) {
+                console.error("Delete error:", error);
+                showAlert('Delete Failed', 'Could not delete the tag from the cloud.', 'error');
+            } finally {
+                btnDeleteTag.textContent = btnOrigText;
+                btnDeleteTag.disabled = false;
+            }
+        });
+
+        studentNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                btnSaveTag.click();
+            }
+        });
+
+        function loadQuizView() {
+            const allTags = getAllTags();
+            const uniqueNames = [...new Set(allTags.map(t => t.name.toLowerCase()))];
+            
+            if (uniqueNames.length < 4) {
+                showAlert('Need More Tags', 'You need to tag at least 4 students with distinct names across your classes before you can use the multiple-choice quiz.', 'error');
+                return;
+            }
+
+            switchView('quiz');
+            updateNavActiveState(null, true);
+            viewTitle.textContent = 'Student Recognition Quiz';
+            
+            generateNewQuizQuestion(allTags);
+        }
+
+        function generateNewQuizQuestion(allTags) {
+            quizFeedback.classList.add('hidden');
+            quizNextBtn.classList.add('hidden');
+            quizOptionsContainer.innerHTML = '';
+            
+            // Select correct student
+            const randomIndex = Math.floor(Math.random() * allTags.length);
+            currentQuizTag = allTags[randomIndex];
+            
+            // Gather 3 distinct incorrect names
+            let uniqueNames = [...new Set(allTags.map(t => t.name))];
+            let wrongNames = uniqueNames.filter(n => n.toLowerCase() !== currentQuizTag.name.toLowerCase());
+            wrongNames = wrongNames.sort(() => 0.5 - Math.random()).slice(0, 3);
+            
+            let options = [currentQuizTag.name, ...wrongNames].sort(() => 0.5 - Math.random());
+            
+            // Render buttons
+            options.forEach(optName => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all shadow-sm';
+                btn.textContent = optName;
+                btn.addEventListener('click', () => handleMcAnswer(btn, optName.toLowerCase() === currentQuizTag.name.toLowerCase()));
+                quizOptionsContainer.appendChild(btn);
+            });
+
+            // Set up spotlight image
+            const clsInfo = classConfig.find(c => c.id === currentQuizTag.classId);
+            
+            quizImage.onerror = () => {
+                 quizImage.src = `https://placehold.co/1920x1080/e2e8f0/64748b?text=${clsInfo.name}+Image+Missing+Locally`;
+            };
+            quizImage.src = clsInfo.img;
+
+            quizImage.onload = () => {
+                spotlight.style.left = `${currentQuizTag.x}%`;
+                spotlight.style.top = `${currentQuizTag.y}%`;
+            };
+            if(quizImage.complete) {
+                spotlight.style.left = `${currentQuizTag.x}%`;
+                spotlight.style.top = `${currentQuizTag.y}%`;
+            }
+        }
+        
+        function handleMcAnswer(clickedBtn, isCorrect) {
+            // Disable all to prevent multi-clicking
+            const buttons = quizOptionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            quizFeedback.classList.remove('hidden');
+            quizNextBtn.classList.remove('hidden');
+            
+            if (isCorrect) {
+                clickedBtn.className = 'w-full border-2 border-green-500 bg-green-50 text-green-700 font-medium py-3 px-4 rounded-xl transition-all shadow-sm';
+                quizFeedback.textContent = "Correct! Well done.";
+                quizFeedback.className = 'font-bold text-lg mb-3 text-center text-green-600 block';
+            } else {
+                clickedBtn.className = 'w-full border-2 border-red-500 bg-red-50 text-red-700 font-medium py-3 px-4 rounded-xl transition-all shadow-sm';
+                quizFeedback.textContent = `Incorrect. That is ${currentQuizTag.name}.`;
+                quizFeedback.className = 'font-bold text-lg mb-3 text-center text-red-600 block';
+                
+                // Highlight the correct button
+                buttons.forEach(btn => {
+                    if (btn.textContent.toLowerCase() === currentQuizTag.name.toLowerCase()) {
+                        btn.className = 'w-full border-2 border-green-500 bg-green-50 text-green-700 font-medium py-3 px-4 rounded-xl transition-all shadow-sm';
+                    }
+                });
+            }
+        }
+
+        quizNextBtn.addEventListener('click', () => {
+            const allTags = getAllTags();
+            generateNewQuizQuestion(allTags);
+        });
+
+        // Application start
+        initNavigation();
+        initFirebase();
+
+    </script>
+</body>
+</html>
